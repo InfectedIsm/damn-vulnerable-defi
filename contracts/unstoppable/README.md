@@ -10,10 +10,16 @@ Stop the pool from offering flash loans
 
 **⇒ what does that mean ?** 
 To stop the lending pool to offer flash loan, we need to block its logic or to remove all its funds
-If we check the flashLoan function of the pool (UnstoppableLender.sol) we see that there is a require at the end, balanceAfter ≥ balanceBefore
+If we check the flashLoan function of the pool (UnstoppableLender.sol) we see that there are multiple check, if one of them is always wrong, flashloans are blocked forever.
+For example, we could try to make poolBalance (always) ≠ balanceBefore 
+This is maybe possible because poolBalance is managed by the Lender contract, while balanceBefore is the balance of the Lender on the DVT contract
 
 **⇒ what are my degree of freedom as an EoA ?**
 I can deploy the Receiver contract who can execute a flashloan from Lender
+
+**⇒  How does the contract works ?**
+
+A user create a Receiver contract to be able to get a DVT flashloan from the Lender contract
 
 user interactable
 
