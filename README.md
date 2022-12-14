@@ -1,4 +1,5 @@
 ![](cover.png)
+![](cover2.png)
 
 **A set of challenges to learn offensive security of smart contracts in Ethereum.**
 
