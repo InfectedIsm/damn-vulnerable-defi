@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "hardhat/console.sol";
 
 interface IReceiver {
     function receiveTokens(address tokenAddress, uint256 amount) external;
@@ -37,6 +38,8 @@ contract UnstoppableLender is ReentrancyGuard {
         require(balanceBefore >= borrowAmount, "Not enough tokens in pool");
 
         // Ensured by the protocol via the `depositTokens` function
+        //@audit if poolBalance is skewed from real pool balance on DVT, this will always fail
+        // and flashloan will be blocked  
         assert(poolBalance == balanceBefore);
         
         damnValuableToken.transfer(msg.sender, borrowAmount);

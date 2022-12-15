@@ -4,24 +4,33 @@ const { expect } = require('chai');
 describe('[Challenge] Unstoppable', function () {
     let deployer, attacker, someUser;
 
-    // Pool has 1M * 10**18 tokens
+    // Pool has 1M * 10**18 tokens = 10**24
     const TOKENS_IN_POOL = ethers.utils.parseEther('1000000');
     const INITIAL_ATTACKER_TOKEN_BALANCE = ethers.utils.parseEther('100');
 
     before(async function () {
         /** SETUP SCENARIO - NO NEED TO CHANGE ANYTHING HERE */
 
+        //*** 3 addresses 
         [deployer, attacker, someUser] = await ethers.getSigners();
+        console.log("deployer: ", deployer.address);
+        console.log("attacker: ", attacker.address);
+        console.log("someUser: ", someUser.address);
 
+        //*** Token and Lender deployed by deployer address
         const DamnValuableTokenFactory = await ethers.getContractFactory('DamnValuableToken', deployer);
         const UnstoppableLenderFactory = await ethers.getContractFactory('UnstoppableLender', deployer);
 
+        //// Contracts objects obtained from above contractFactories 
         this.token = await DamnValuableTokenFactory.deploy();
         this.pool = await UnstoppableLenderFactory.deploy(this.token.address);
 
+        //*** Token contract has been deployed by deployer, thus msg.sender of the transaction here
+        //*** is by default deployer
         await this.token.approve(this.pool.address, TOKENS_IN_POOL);
         await this.pool.depositTokens(TOKENS_IN_POOL);
 
+        //*** 100 token are given to attacker
         await this.token.transfer(attacker.address, INITIAL_ATTACKER_TOKEN_BALANCE);
 
         expect(
