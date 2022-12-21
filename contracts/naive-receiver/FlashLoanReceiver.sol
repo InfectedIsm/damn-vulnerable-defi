@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/utils/Address.sol";
  * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
  */
 contract FlashLoanReceiver {
+    //@audit methods on address are using Address.sol library
+    //pool in an address in this code
     using Address for address payable;
 
     address payable private pool;
@@ -18,6 +20,7 @@ contract FlashLoanReceiver {
     }
 
     // Function called by the pool during flash loan
+    //@audit if delegatecall from Lender, msg.sender = Lender, tx.origin = 
     function receiveEther(uint256 fee) public payable {
         require(msg.sender == pool, "Sender must be pool");
 
@@ -28,6 +31,8 @@ contract FlashLoanReceiver {
         _executeActionDuringFlashLoan();
         
         // Return funds to pool
+        //@audit from Address.sol doc, we know that this function is subject to reentrancy
+        // if not properly managed
         pool.sendValue(amountToBeRepaid);
     }
 
