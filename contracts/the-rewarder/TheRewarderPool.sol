@@ -9,7 +9,6 @@ import "./AccountingToken.sol";
 /**
  * @title TheRewarderPool
  * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
-
  */
 contract TheRewarderPool {
 
