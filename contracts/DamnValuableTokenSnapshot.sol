@@ -12,6 +12,8 @@ contract DamnValuableTokenSnapshot is ERC20Snapshot {
     
     uint256 private lastSnapshotId;
 
+    //notes: calling ERC20(TokenName, TokenSymbol) as a "modifier" of the constructor first call ERC20 constructor, 
+    //then execute the caller contract constructor
     constructor(uint256 initialSupply) ERC20("DamnValuableToken", "DVT") {
         _mint(msg.sender, initialSupply);
     }
