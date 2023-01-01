@@ -26,10 +26,6 @@ contract GovernanceAttacker {
     uint256 amount;
     uint256 actionId;
 
-    enum Status {QueueAction, ExecuteAction}
-
-    Status status;
-
     constructor(
         address _govToken,
         address _simpleGovernance,
@@ -68,6 +64,5 @@ contract GovernanceAttacker {
 
     function finalAttack() external {
         simpleGovernance.executeAction(actionId);
-        uint256 ownerBalance = govToken.balanceOf(owner);
     }
 }
