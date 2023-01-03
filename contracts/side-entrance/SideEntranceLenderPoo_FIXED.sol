@@ -19,7 +19,7 @@ contract SideEntranceLenderPoolFIXED {
     bool flashLoanInProgress;
 
     function deposit() external payable {
-        require(!flashLoanInProgress);
+        require(!flashLoanInProgress, "flashloan in progress");
         balances[msg.sender] += msg.value;
     }
 
@@ -32,10 +32,11 @@ contract SideEntranceLenderPoolFIXED {
     function flashLoan(uint256 amount) external {
         uint256 balanceBefore = address(this).balance;
         require(balanceBefore >= amount, "Not enough ETH in balance");
+        require(!flashLoanInProgress, "flashloan in progress");
         flashLoanInProgress = true;
         IFlashLoanEtherReceiver(msg.sender).execute{value: amount}();
         require(address(this).balance >= balanceBefore, "Flash loan hasn't been paid back"); 
-        flashLoanInProgress = true;
+        flashLoanInProgress = false;
     }
 }
  
