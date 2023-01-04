@@ -27,6 +27,9 @@ contract PoolAttackerBis {
         ISideEntranceLenderPool(pool).flashLoan(amount);
     }
 
+    //this solution do not work, because multiple time re-entrancy also means exiting multiple times
+    //and as the balanceBefore variable of the victim contract is instantiate for each call
+    //this cannot work
     function execute() external payable {
         console.log("msg.value");
         console.log(msg.value);
@@ -45,6 +48,7 @@ contract PoolAttackerBis {
             pool.call{value:msg.value}("");
         }
     }
+
 
     function steal() external payable {
         ISideEntranceLenderPool(pool).withdraw();
