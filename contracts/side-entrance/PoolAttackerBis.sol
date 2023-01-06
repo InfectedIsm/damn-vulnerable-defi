@@ -45,7 +45,8 @@ contract PoolAttackerBis {
         } 
         else {
             console.log("else");
-            pool.call{value:msg.value}("");
+            (bool success,) = pool.call{value:msg.value}("");
+            require(success);
         }
     }
 
