@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./TrustfulOracle.sol";
 import "../DamnValuableNFT.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Exchange
  * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
@@ -31,6 +33,7 @@ contract Exchange is ReentrancyGuard {
         require(amountPaidInWei > 0, "Amount paid must be greater than zero");
 
         // Price should be in [wei / NFT]
+        //@audit - #oracle an attacker could manipulate the median price ?
         uint256 currentPriceInWei = oracle.getMedianPrice(token.symbol());
         require(amountPaidInWei >= currentPriceInWei, "Amount paid is not enough");
 
@@ -48,14 +51,15 @@ contract Exchange is ReentrancyGuard {
         require(token.getApproved(tokenId) == address(this), "Seller must have approved transfer");
 
         // Price should be in [wei / NFT]
+        //@audit - an attacker could manipulate the median price ?
         uint256 currentPriceInWei = oracle.getMedianPrice(token.symbol());
         require(address(this).balance >= currentPriceInWei, "Not enough ETH in balance");
 
         token.transferFrom(msg.sender, address(this), tokenId);
         token.burn(tokenId);
-        
-        payable(msg.sender).sendValue(currentPriceInWei);
 
+        payable(msg.sender).sendValue(currentPriceInWei);
+        
         emit TokenSold(msg.sender, tokenId, currentPriceInWei);
     }
 
