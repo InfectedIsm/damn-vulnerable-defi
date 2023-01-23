@@ -6,6 +6,7 @@ const { expect } = require('chai');
 
 // Calculates how much ETH (in wei) Uniswap will pay for the given amount of tokens
 function calculateTokenToEthInputPrice(tokensSold, tokensInReserve, etherInReserve) {
+    /// token_Sold * 0.997 * ETH_InReserve / ((token_InReserve * 1) + (token_Sold * 0.997) ) 
     return tokensSold.mul(ethers.BigNumber.from('997')).mul(etherInReserve).div(
         (tokensInReserve.mul(ethers.BigNumber.from('1000')).add(tokensSold.mul(ethers.BigNumber.from('997'))))
     )
@@ -68,7 +69,7 @@ describe('[Challenge] Puppet', function () {
         );
         await this.uniswapExchange.addLiquidity(
             0,                                                          // min_liquidity
-            UNISWAP_INITIAL_TOKEN_RESERVE,
+            UNISWAP_INITIAL_TOKEN_RESERVE,                              /// max tokens added
             (await ethers.provider.getBlock('latest')).timestamp * 2,   // deadline
             { value: UNISWAP_INITIAL_ETH_RESERVE, gasLimit: 1e6 }
         );

@@ -31,6 +31,9 @@ contract PuppetPool is ReentrancyGuard {
         require(msg.value >= depositRequired, "Not depositing enough collateral");
         
         if (msg.value > depositRequired) {
+            //@audit this function calls the fallback function with a call, meaning all gas is forwarded
+            //that means I could execute another function to manipulate the DVT/ETH price after this
+            // for example, I could 
             payable(msg.sender).sendValue(msg.value - depositRequired);
         }
 
