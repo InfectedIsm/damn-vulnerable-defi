@@ -6,7 +6,7 @@ const { expect } = require('chai');
 
 // Calculates how much ETH (in wei) Uniswap will pay for the given amount of tokens
 function calculateTokenToEthInputPrice(tokensSold, tokensInReserve, etherInReserve) {
-    /// token_Sold * 0.997 * ETH_InReserve / ((token_InReserve * 1) + (token_Sold * 0.997) ) 
+    /// token_Sold * 997 * ETH_InReserve / ((token_InReserve * 1000) + (token_Sold * 997) ) 
     return tokensSold.mul(ethers.BigNumber.from('997')).mul(etherInReserve).div(
         (tokensInReserve.mul(ethers.BigNumber.from('1000')).add(tokensSold.mul(ethers.BigNumber.from('997'))))
     )
@@ -104,7 +104,7 @@ describe('[Challenge] Puppet', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
-        let ERC20ToSell = ethers.utils.parseEther('100');
+        let ERC20ToSell = ethers.utils.parseEther('1');
         let value = await this.uniswapExchange.getEthToTokenInputPrice(
             ERC20ToSell,
             { gasLimit: 1e6 }
@@ -128,11 +128,14 @@ describe('[Challenge] Puppet', function () {
                 blockTimestamp*2, //1 week
             )
 
+            console.log("ERC20PoolBalance: " +  ethers.utils.formatEther(await this.token.balanceOf(this.uniswapExchange.address)))
+            console.log("ETHPoolBalance: " +  ethers.utils.formatEther(await ethers.provider.getBalance(this.uniswapExchange.address)))
+
             value = await this.uniswapExchange.getEthToTokenInputPrice(
                 ERC20ToSell,
                 { gasLimit: 1e6 }
             )
-            console.log("ERC20/ETH after: " + ethers.utils.formatEther(value));
+            console.log("ERC20/ETH after: " + ethers.utils.formatEther(value) + "\n===============");
         }
         
 
