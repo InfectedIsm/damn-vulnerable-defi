@@ -44,6 +44,7 @@ contract PuppetV2Pool {
      *         Calculations assume that WETH and borrowed token have same amount of decimals.
      */
     function borrow(uint256 borrowAmount) external {
+        // Make sure the contract has enough tokens
         require(_token.balanceOf(address(this)) >= borrowAmount, "Not enough token balance");
 
         // Calculate how much WETH the user must deposit
@@ -72,3 +73,4 @@ contract PuppetV2Pool {
         return UniswapV2Library.quote(amount.mul(10 ** 18), reservesToken, reservesWETH);
     }
 }
+
