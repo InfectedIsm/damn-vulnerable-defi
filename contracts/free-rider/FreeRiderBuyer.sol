@@ -22,6 +22,7 @@ contract FreeRiderBuyer is ReentrancyGuard, IERC721Receiver {
         require(msg.value == JOB_PAYOUT);
         partner = _partner;
         nft = IERC721(_nft);
+        //@audit-info buyer (from js challenge file) address has control over NFTs owned by this contract
         IERC721(_nft).setApprovalForAll(msg.sender, true);
     }
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../DamnValuableNFT.sol";
+import "hardhat/console.sol";
 
 /**
  * @title FreeRiderNFTMarketplace
@@ -57,6 +58,7 @@ contract FreeRiderNFTMarketplace is ReentrancyGuard {
         amountOfOffers++;
 
         emit NFTOffered(msg.sender, tokenId, price);
+        // console.log("NFTOffered", msg.sender, tokenId, price);
     }
 
     function buyMany(uint256[] calldata tokenIds) external payable nonReentrant {

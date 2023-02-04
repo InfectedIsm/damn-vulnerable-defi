@@ -17,7 +17,7 @@ describe('[Challenge] Free Rider', function () {
     // The buyer will offer 45 ETH as payout for the job
     const BUYER_PAYOUT = ethers.utils.parseEther('45');
 
-    // Initial reserves for the Uniswap v2 pool
+    // Initial reserves for the Uniswap v2 pool (DVT/WETH)
     const UNISWAP_INITIAL_TOKEN_RESERVE = ethers.utils.parseEther('15000');
     const UNISWAP_INITIAL_WETH_RESERVE = ethers.utils.parseEther('9000');
 
@@ -52,6 +52,8 @@ describe('[Challenge] Free Rider', function () {
             this.uniswapRouter.address,
             UNISWAP_INITIAL_TOKEN_RESERVE
         );
+
+        //addLiquidityETH accept ETH to create a WETH/ERC20 pair using in the back the WETH contract to mint WETH with the ETH sent
         await this.uniswapRouter.addLiquidityETH(
             this.token.address,                                         // token to be traded against WETH
             UNISWAP_INITIAL_TOKEN_RESERVE,                              // amountTokenDesired
@@ -64,11 +66,13 @@ describe('[Challenge] Free Rider', function () {
         
         // Get a reference to the created Uniswap pair
         const UniswapPairFactory = new ethers.ContractFactory(pairJson.abi, pairJson.bytecode, deployer);
+        //ContractFactory.attach deploy the contract (calls the constructor) with the address passed as parameter as the msg.sender
         this.uniswapPair = await UniswapPairFactory.attach(
             await this.uniswapFactory.getPair(this.token.address, this.weth.address)
         );
         expect(await this.uniswapPair.token0()).to.eq(this.weth.address);
         expect(await this.uniswapPair.token1()).to.eq(this.token.address);
+        //BalanceOf returns the amount of LP tokens owned by the address
         expect(await this.uniswapPair.balanceOf(deployer.address)).to.be.gt('0');
 
         // Deploy the marketplace and get the associated ERC721 token
@@ -105,6 +109,33 @@ describe('[Challenge] Free Rider', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        TokenToSwap = ethers.utils.parseEther('1');
+        EthToSwap = ethers.utils.parseEther('0.5');
+
+        pairWethBalance = await this.weth.balanceOf(this.uniswapPair.address);
+        pairTokenBalance = await this.token.balanceOf(this.uniswapPair.address);
+        console.log("WETH Balance of the pair:", ethers.utils.formatEther(pairWethBalance));
+        console.log("DVT Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
+
+        amountOut = await this.uniswapRouter.getAmountsOut(TokenToSwap, [this.token.address, this.weth.address]);
+        console.log("amount out if swapping " , ethers.utils.formatEther(TokenToSwap) , "DVT :", ethers.utils.formatEther(amountOut[1]), "WETH");
+        amountOut = await this.uniswapRouter.getAmountsOut(EthToSwap, [this.weth.address, this.token.address]);
+        console.log("amount out if swapping " , ethers.utils.formatEther(EthToSwap) , "WETH :", ethers.utils.formatEther(amountOut[1]), "DVT");
+
+        //swapping 0.5 ETH for DVT
+        await this.uniswapRouter.swapExactETHForTokens(
+            0,
+            [this.weth.address, this.token.address],
+            attacker.address,
+            (await ethers.provider.getBlock('latest')).timestamp * 2,
+            { value: ethers.utils.parseEther("0.5") }
+        );
+
+        pairWethBalance = await this.weth.balanceOf(this.uniswapPair.address);
+        pairTokenBalance = await this.token.balanceOf(this.uniswapPair.address);
+        console.log("WETH Balance of the pair:", ethers.utils.formatEther(pairWethBalance));
+        console.log("DVT Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
+
     });
 
     after(async function () {
