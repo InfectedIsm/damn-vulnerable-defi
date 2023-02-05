@@ -12,6 +12,11 @@ import "hardhat/console.sol";
  */
 contract FreeRiderNFTMarketplace is ReentrancyGuard {
 
+    //@audit - the contract has 90 ETH in balance from start
+    //@audit - IDEA : what if I create my own NFT collection, mint them to myself and create offers for it?
+    //I then create 6 NFTs, and replace the price of each Ids with  0.01 ETH (I'll be able because I'm the owner of my collection)
+    //when calling _buyOne, the contract will send me the original NFTs, as it has only one NFT address saved
+    //The contract should have indexed with each offer, the address of the NFT collection, not just the tokenId
     using Address for address payable;
 
     DamnValuableNFT public token;
@@ -62,12 +67,14 @@ contract FreeRiderNFTMarketplace is ReentrancyGuard {
     }
 
     function buyMany(uint256[] calldata tokenIds) external payable nonReentrant {
+        //@audit-ok what happens if tokenIds is empty? ==> no for loop 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             _buyOne(tokenIds[i]);
         }
     }
 
     function _buyOne(uint256 tokenId) private {       
+        //@audit - can we fake the price? ==> don't seem possible
         uint256 priceToPay = offers[tokenId];
         require(priceToPay > 0, "Token is not being offered");
 

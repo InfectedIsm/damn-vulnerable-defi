@@ -82,7 +82,7 @@ describe('[Challenge] Free Rider', function () {
             { value: MARKETPLACE_INITIAL_ETH_BALANCE }
         );
 
-        // Deploy NFT contract
+        // Deploy NFT contract --> The NFT contract is already created in the marketplace constructor, so we just need to get it
         const DamnValuableNFTFactory = await ethers.getContractFactory('DamnValuableNFT', deployer);
         this.nft = await DamnValuableNFTFactory.attach(await this.marketplace.token());
 
@@ -109,33 +109,18 @@ describe('[Challenge] Free Rider', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
-        TokenToSwap = ethers.utils.parseEther('1');
-        EthToSwap = ethers.utils.parseEther('0.5');
+        // Solution : 
+        //1. deploy my own NFT collection with Ids from 0 to 5
+        //2. create offers on the marketplace with price of 0.01 ETH for each Ids
+        //3. because the marketplace do not separate offers by NFT address, this will write over the price of the initially offered one
+        //4. then I can buy these NFT myself for 0.01 ETH each
+        //5. I can then transfer them to the buyer contract
+       
+        MY_PRICE = ethers.utils.parseEther('0.01');
 
-        pairWethBalance = await this.weth.balanceOf(this.uniswapPair.address);
-        pairTokenBalance = await this.token.balanceOf(this.uniswapPair.address);
-        console.log("WETH Balance of the pair:", ethers.utils.formatEther(pairWethBalance));
-        console.log("DVT Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
-
-        amountOut = await this.uniswapRouter.getAmountsOut(TokenToSwap, [this.token.address, this.weth.address]);
-        console.log("amount out if swapping " , ethers.utils.formatEther(TokenToSwap) , "DVT :", ethers.utils.formatEther(amountOut[1]), "WETH");
-        amountOut = await this.uniswapRouter.getAmountsOut(EthToSwap, [this.weth.address, this.token.address]);
-        console.log("amount out if swapping " , ethers.utils.formatEther(EthToSwap) , "WETH :", ethers.utils.formatEther(amountOut[1]), "DVT");
-
-        //swapping 0.5 ETH for DVT
-        await this.uniswapRouter.swapExactETHForTokens(
-            0,
-            [this.weth.address, this.token.address],
-            attacker.address,
-            (await ethers.provider.getBlock('latest')).timestamp * 2,
-            { value: ethers.utils.parseEther("0.5") }
-        );
-
-        pairWethBalance = await this.weth.balanceOf(this.uniswapPair.address);
-        pairTokenBalance = await this.token.balanceOf(this.uniswapPair.address);
-        console.log("WETH Balance of the pair:", ethers.utils.formatEther(pairWethBalance));
-        console.log("DVT Balance of the pair:", ethers.utils.formatEther(pairTokenBalance));
-
+        await this.marketplace.connect(attacker).buyMany(
+                []
+            );
     });
 
     after(async function () {
