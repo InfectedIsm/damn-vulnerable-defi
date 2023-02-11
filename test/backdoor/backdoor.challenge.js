@@ -37,6 +37,7 @@ describe('[Challenge] Backdoor', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        //check into ProxyFactory.spec.ts for a singleton example
     });
 
     after(async function () {
