@@ -37,7 +37,39 @@ describe('[Challenge] Backdoor', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
-        //check into ProxyFactory.spec.ts for a singleton example
+        //1. singleton : masterCopy.address
+
+        //2. initializer : abi.encodeWithSignature of GnosisSafe::setup(address[], uint256, address, bytes, address, address, uint256, address) from 
+        // function setup(
+        //     address[] calldata _owners,
+        //     uint256 _threshold,
+        //     address to,
+        //     bytes calldata data,
+        //     address fallbackHandler,
+        //     address paymentToken,
+        //     uint256 payment,
+        //     address payable paymentReceiver
+        // )
+
+        //3. saltNonce : salt used in create2 to generate a unique address
+        //4. callback : this.walletRegistry.address
+
+        //to create a wallet : walletFactory.createProxyWithCallback(masterCopy.address, initializer, saltNonce, callback)
+        
+        // Solution : Using an attack smart contract, create a wallet, set Alice as owners[0], funds will be transfered to the wallet
+        // do it for all users
+        owners = [alice.address, bob.address, charlie.address, david.address];
+        threshold = 1;
+        to = //address(0) or a contract that can execute a delegatecall, can be useful?"
+        data = //bytes(0) or a data that will be executed by the delegatecall
+        fallbackHandler = //address(0)
+        paymentToken = //address(0) (ETH) or DVT ?
+        payment = //the value of DVT ?
+        paymentReceiver = //the attacker address
+
+        initializers = //ethers.utils.AbiCoder.encode of everyting above
+        await this.walletFactory.connect(attacker).createProxyWithCallback(this.masterCopy.address, "0x", 0, this.walletRegistry.address);
+
     });
 
     after(async function () {
