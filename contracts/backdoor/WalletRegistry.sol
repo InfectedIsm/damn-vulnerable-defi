@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol";
 import "@gnosis.pm/safe-contracts/contracts/proxies/IProxyCreationCallback.sol";
+import "hardhat/console.sol";
 
 /**
  * @title WalletRegistry
@@ -58,6 +59,8 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
      @notice Function executed when user creates a Gnosis Safe wallet via GnosisSafeProxyFactory::createProxyWithCallback
              setting the registry's address as the callback.
      */
+    //@audit-info - singleton = masterCopy.address
+
     function proxyCreated(
         GnosisSafeProxy proxy,
         address singleton,
@@ -65,26 +68,22 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
         uint256
     ) external override {
         // Make sure we have enough DVT to pay
+        console.log("entered proxyCreated");
         require(token.balanceOf(address(this)) >= TOKEN_PAYMENT, "Not enough funds to pay");
-
         address payable walletAddress = payable(proxy);
 
         // Ensure correct factory and master copy
         require(msg.sender == walletFactory, "Caller must be factory");
         require(singleton == masterCopy, "Fake mastercopy used");
-        
         // Ensure initial calldata was a call to `GnosisSafe::setup`
         require(bytes4(initializer[:4]) == GnosisSafe.setup.selector, "Wrong initialization");
-
         // Ensure wallet initialization is the expected
         require(GnosisSafe(walletAddress).getThreshold() == MAX_THRESHOLD, "Invalid threshold");
         require(GnosisSafe(walletAddress).getOwners().length == MAX_OWNERS, "Invalid number of owners");       
-
         // Ensure the owner is a registered beneficiary
         address walletOwner = GnosisSafe(walletAddress).getOwners()[0];
 
         require(beneficiaries[walletOwner], "Owner is not registered as beneficiary");
-
         // Remove owner as beneficiary
         _removeBeneficiary(walletOwner);
 
@@ -92,6 +91,12 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
         wallets[walletOwner] = walletAddress;
 
         // Pay tokens to the newly created wallet
+        //@audit vulnerability should happen here as we need to get these tokens
+        // this could be either ? :
+        // 1. the walletAddress is not a GnosisSafe wallet but a contract that can steal the tokens
+        // 2. The attacker will have crafted the wallet to be able to get the token afterwards
+        //   a. for example by making the wallet approve the attacker's address to transfer the tokens
+
         token.transfer(walletAddress, TOKEN_PAYMENT);        
     }
 }
