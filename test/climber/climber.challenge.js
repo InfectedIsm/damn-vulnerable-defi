@@ -33,10 +33,11 @@ describe('[Challenge] Climber', function () {
         expect(await this.vault.owner()).to.not.eq(deployer.address);
         
         // Instantiate timelock
+        // Timelock is deployed by the vault during the init, 'attach' will return the instance of a contract deployed at this address
         let timelockAddress = await this.vault.owner();
         this.timelock = await (
             await ethers.getContractFactory('ClimberTimelock', deployer)
-        ).attach(timelockAddress);
+        ).attach(timelockAddress); 
         
         // Ensure timelock roles are correctly initialized
         expect(

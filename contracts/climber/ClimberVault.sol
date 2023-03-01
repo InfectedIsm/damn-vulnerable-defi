@@ -35,6 +35,7 @@ contract ClimberVault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         __UUPSUpgradeable_init();
 
         // Deploy timelock and transfer ownership to it
+        //@audit-info Timelock is the owner
         transferOwnership(address(new ClimberTimelock(admin, proposer)));
 
         _setSweeper(sweeper);
@@ -76,5 +77,6 @@ contract ClimberVault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     // By marking this internal function with `onlyOwner`, we only allow the owner account to authorize an upgrade
+    //@audit-info Timelock can upgrade the contract: can I trick TimeLock to upgrade to my contract?
     function _authorizeUpgrade(address newImplementation) internal onlyOwner override {}
 }

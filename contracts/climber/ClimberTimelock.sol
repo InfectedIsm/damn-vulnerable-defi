@@ -38,6 +38,7 @@ contract ClimberTimelock is AccessControl {
         address admin,
         address proposer
     ) {
+        //@audit-info deployer + Timelock have ADMIN_ROLE and PROPOSER_ROLE
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(PROPOSER_ROLE, ADMIN_ROLE);
 
@@ -45,6 +46,7 @@ contract ClimberTimelock is AccessControl {
         _setupRole(ADMIN_ROLE, admin);
         _setupRole(ADMIN_ROLE, address(this));
 
+        //@audit-info proposer + Timelock have PROPOSER_ROLE
         _setupRole(PROPOSER_ROLE, proposer);
     }
 
@@ -70,7 +72,8 @@ contract ClimberTimelock is AccessControl {
     ) public pure returns (bytes32) {
         return keccak256(abi.encode(targets, values, dataElements, salt));
     }
-
+    //@audit-info protected by onlyRole(PROPOSER_ROLE)
+    //@audit can I schedule an operation even if I am not the proposer/admin ? Can I trick the proposer to schedule an operation ?
     function schedule(
         address[] calldata targets,
         uint256[] calldata values,
@@ -89,6 +92,11 @@ contract ClimberTimelock is AccessControl {
     }
 
     /** Anyone can execute what has been scheduled via `schedule` */
+    //@audit execute is not protected by any role, if the target is the Timelock
+    // this means I can force the Timelock to execute any of its own role-protected functions like schedule
+    // First stp is to set the new delay to 0 so that the require in schedule is bypassed for the operations[id]
+    // Then as a second step, I can schedule the set of operations[id] I'm currently executing 
+    // Finally, I can set me as the new sweeper in the vault
     function execute(
         address[] calldata targets,
         uint256[] calldata values,
@@ -102,9 +110,10 @@ contract ClimberTimelock is AccessControl {
         bytes32 id = getOperationId(targets, values, dataElements, salt);
 
         for (uint8 i = 0; i < targets.length; i++) {
+            //@audit external call: can be exploited ?
             targets[i].functionCallWithValue(dataElements[i], values[i]);
         }
-        
+        //@audit can this require be tricked ? To do so we need op.readyAtTimestamp >= block.timestamp
         require(getOperationState(id) == OperationState.ReadyForExecution);
         operations[id].executed = true;
     }
