@@ -55,7 +55,7 @@ describe('[Challenge] Climber', function () {
     it('Exploit', async function () {        
         /** CODE YOUR EXPLOIT HERE */
         // 1. Deploy the attacker contract
-        this.attackContract = await (await ethers.getContractFactory('ClimberAttacker', attacker)).deploy(this.timelock.address, this.vault.address, this.token.address);
+        this.attackContract = await (await ethers.getContractFactory('ClimberAttacker', attacker)).deploy(this.timelock.address, this.vault.address);
         // 2. Call the attack function
         await this.attackContract.attack();
     });
