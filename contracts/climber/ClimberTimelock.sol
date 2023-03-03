@@ -117,6 +117,7 @@ contract ClimberTimelock is AccessControl {
         console.log("id: %s", uint256(id));
 
         for (uint8 i = 0; i < targets.length; i++) {
+            console.log("operation n_%s", i);
             //@audit external call: can be exploited ? ==> yes, check audit line 95
             targets[i].functionCallWithValue(dataElements[i], values[i]);
         }

